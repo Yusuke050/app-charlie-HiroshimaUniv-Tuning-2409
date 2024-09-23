@@ -24,7 +24,7 @@ mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let pool = infrastructure::db::create_pool_with_size(10).await;
+    let pool = infrastructure::db::create_pool().await;
     let mut port = 8080;
 
     if cfg!(debug_assertions) {
