@@ -12,3 +12,4 @@ SET area_id = (
 
 ALTER TABLE orders ADD INDEX index_orders_on_order_time(order_time);
 ALTER TABLE orders ADD INDEX index_orders_on_area_id_and_status(area_id, status);
+ALTER TABLE nodes ADD INDEX index_nodes_on_area_id(area_id);
