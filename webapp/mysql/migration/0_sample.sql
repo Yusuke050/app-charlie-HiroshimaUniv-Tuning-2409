@@ -1,5 +1,6 @@
 -- このファイルに記述されたSQLコマンドが、マイグレーション時に実行されます。
 ALTER TABLE users ADD INDEX index_users_on_username(username);
+ALTER TABLE dispatchers ADD INDEX index_dispatchers_userid(user_id);
 
 ALTER TABLE orders ADD COLUMN area_id INT NULL;
 
