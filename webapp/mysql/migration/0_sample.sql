@@ -10,5 +10,4 @@ SET area_id = (
     WHERE nodes.id = orders.node_id
 );
 
-ALTER TABLE orders
-ADD INDEX idx_orders_area_status (area_id, status);
+ALTER TABLE orders ADD INDEX index_orders_on_area_id_and_status(area_id, status);
