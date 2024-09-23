@@ -68,8 +68,8 @@ impl OrderRepository for OrderRepositoryImpl {
         );
 
         let where_clause = match (status.clone(), area) {
-            (Some(_), Some(_)) => "WHERE o.status = ? AND n.area_id = ?".to_string(),
-            (None, Some(_)) => "WHERE n.area_id = ?".to_string(),
+            (Some(_), Some(_)) => "WHERE o.status = ? AND o.area_id = ?".to_string(),
+            (None, Some(_)) => "WHERE o.area_id = ?".to_string(),
             (Some(_), None) => "WHERE o.status = ?".to_string(),
             _ => "".to_string(),
         };
@@ -87,10 +87,6 @@ impl OrderRepository for OrderRepositoryImpl {
                 o.completed_time
             FROM
                 orders o
-            JOIN
-                nodes n
-            ON 
-                o.node_id = n.id
             {} 
             {} 
             LIMIT ? 
@@ -142,13 +138,21 @@ impl OrderRepository for OrderRepositoryImpl {
         node_id: i32,
         car_value: f64,
     ) -> Result<(), AppError> {
-        sqlx::query("INSERT INTO orders (client_id, node_id, status, car_value) VALUES (?, ?, 'pending', ?)")
+        // node_id に対応する area_id を取得
+        let area_id: i32 = sqlx::query_scalar("SELECT area_id FROM nodes WHERE id = ?")
+            .bind(node_id)
+            .fetch_one(&self.pool)
+            .await?;
+        
+        // orders テーブルに新しいレコードを挿入
+        sqlx::query("INSERT INTO orders (client_id, node_id, area_id, status, car_value) VALUES (?, ?, ?, 'pending', ?)")
             .bind(client_id)
             .bind(node_id)
+            .bind(area_id)
             .bind(car_value)
             .execute(&self.pool)
             .await?;
-
+    
         Ok(())
     }
 
@@ -169,7 +173,7 @@ impl OrderRepository for OrderRepositoryImpl {
 
         Ok(())
     }
-
+// /order/dispatcher
     async fn create_completed_order(
         &self,
         order_id: i32,
