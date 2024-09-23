@@ -113,6 +113,19 @@ impl<
         //     tow_trucks_with_distance
         // };
 
+        // let sorted_tow_trucks_by_distance = {
+        //     let mut tow_trucks_with_distance: Vec<_> = tow_trucks
+        //         .into_iter()
+        //         .map(|truck| {
+        //             let distance = calculate_distance(&graph, truck.node_id, order.node_id);
+        //             (distance, truck)
+        //         })
+        //         .collect();
+
+        //     tow_trucks_with_distance.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+        //     tow_trucks_with_distance
+        // };
+
 
         
 
