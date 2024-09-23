@@ -1,6 +1,6 @@
+use crate::domains::auth_service::AuthRepository;
 use crate::errors::AppError;
-use crate::models::user::{Dispatcher, User};
-use crate::{domains::auth_service::AuthRepository, models::user::Session};
+use crate::models::user::{Dispatcher, Session, User};
 use sqlx::mysql::MySqlPool;
 
 #[derive(Debug)]
@@ -84,13 +84,17 @@ impl AuthRepository for AuthRepositoryImpl {
         &self,
         session_token: &str,
     ) -> Result<Session, AppError> {
-        let session =
+        // SQLクエリで取得したセッションのフィールドを設定
+        if let Some(session) =
             sqlx::query_as::<_, Session>("SELECT * FROM sessions WHERE session_token = ?")
                 .bind(session_token)
-                .fetch_one(&self.pool)
-                .await?;
-
-        Ok(session)
+                .fetch_optional(&self.pool)
+                .await?
+        {
+            Ok(session)
+        } else {
+            Err(AppError::NotFound) // セッションが見つからなかった場合
+        }
     }
 
     async fn find_dispatcher_by_id(&self, id: i32) -> Result<Option<Dispatcher>, AppError> {
