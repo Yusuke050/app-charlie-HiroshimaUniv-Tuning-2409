@@ -113,36 +113,43 @@ impl<
         //     tow_trucks_with_distance
         // };
 
-        let sorted_tow_trucks_by_distance = {
+
+        
+
+        let nearest_tow_truck = {
             // ダイクストラ法を使用して、order.node_id（ユーザーがいる位置）から各ノードまでの最短距離を計算
             let distances_from_order = graph.dijkstra(order.node_id);
 
-            let mut tow_trucks_with_distance: Vec<_> = tow_trucks
-                .into_iter()
-                .map(|truck| {
-                    // トラックの位置 (truck.node_id) までの最短距離を取得
-                    let distance = distances_from_order.get(&truck.node_id).cloned().unwrap_or(i32::MAX);
-                    (distance, truck)
-                })
-                .collect();
+            // 最短距離とそのトラックを保持するための変数。初期値として非常に大きな距離 (10000001) を設定
+            let mut nearest_truck: Option<TowTruck> = None;
+            let mut min_distance = 10000001;
+            let mut min_truck_id = i32::MAX; // 最小IDを保持するための変数
 
-            // 距離でソート
-            tow_trucks_with_distance.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-            tow_trucks_with_distance
+            for truck in tow_trucks {
+                // トラックの位置 (truck.node_id) までの最短距離を取得
+                let distance = distances_from_order.get(&truck.node_id).cloned().unwrap_or(10000001);
+
+                // 現在の距離が min_distance より小さい場合、または同じ距離でトラックのIDが小さい場合に更新
+                if distance < min_distance || (distance == min_distance && truck.node_id < min_truck_id) {
+                    min_distance = distance;
+                    min_truck_id = truck.node_id; // IDも更新
+                    nearest_truck = Some(truck);
+                }
+            }
+
+            // 最短距離が初期値のままかどうかをチェック
+            if min_distance == 10000001 {
+                None
+            } else {
+                nearest_truck
+            }
         };
 
-
-        if sorted_tow_trucks_by_distance.is_empty() || sorted_tow_trucks_by_distance[0].0 > 10000000
-        {
-            return Ok(None);
+        if let Some(truck) = nearest_tow_truck {
+            Ok(Some(TowTruckDto::from_entity(truck)))
+        } else {
+            Ok(None)
         }
-
-        let sorted_tow_truck_dtos: Vec<TowTruckDto> = sorted_tow_trucks_by_distance
-            .into_iter()
-            .map(|(_, truck)| TowTruckDto::from_entity(truck))
-            .collect();
-
-        Ok(sorted_tow_truck_dtos.first().cloned())
     }
 }
 
