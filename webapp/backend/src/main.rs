@@ -24,7 +24,7 @@ mod utils;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let pool = infrastructure::db::create_pool().await;
+    let pool = infrastructure::db::create_pool_with_size(10).await;
     let mut port = 8080;
 
     if cfg!(debug_assertions) {
@@ -58,7 +58,7 @@ async fn main() -> std::io::Result<()> {
             ])
             .allowed_header(actix_web::http::header::CONTENT_TYPE)
             .supports_credentials()
-            .max_age(3600);
+            .max_age(86400);
 
         App::new()
             .app_data(tow_truck_service.clone())
