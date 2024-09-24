@@ -21,6 +21,8 @@ pub trait AuthRepository {
         &self,
         user_id: i32,
     ) -> Result<Option<Dispatcher>, AppError>;
+    async fn find_user_by_ids(&self, ids: &[i32]) -> Result<Vec<User>, AppError>;
+    async fn find_users_by_ids(&self, ids: &[i32]) -> Result<Vec<User>, AppError>;
     async fn find_profile_image_name_by_user_id(
         &self,
         user_id: i32,
@@ -29,6 +31,7 @@ pub trait AuthRepository {
     async fn delete_session(&self, session_token: &str) -> Result<(), AppError>;
     async fn find_session_by_session_token(&self, session_token: &str)
         -> Result<Session, AppError>;
+    async fn find_dispatchers_by_ids(&self, ids: &[i32]) -> Result<Vec<Dispatcher>, AppError>;
 }
 
 #[derive(Debug)]

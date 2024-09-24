@@ -16,6 +16,7 @@ pub trait TowTruckRepository {
     async fn update_location(&self, truck_id: i32, node_id: i32) -> Result<(), AppError>;
     async fn update_status(&self, truck_id: i32, status: &str) -> Result<(), AppError>;
     async fn find_tow_truck_by_id(&self, id: i32) -> Result<Option<TowTruck>, AppError>;
+    async fn find_tow_truck_by_ids(&self, ids: &[i32]) -> Result<Vec<TowTruck>, AppError>;
 }
 
 #[derive(Debug)]
@@ -126,9 +127,6 @@ impl<
         //     tow_trucks_with_distance
         // };
 
-
-        
-
         let nearest_tow_truck = {
             // ダイクストラ法を使用して、order.node_id（ユーザーがいる位置）から各ノードまでの最短距離を計算
             let distances_from_order = graph.dijkstra(order.node_id);
@@ -140,10 +138,15 @@ impl<
 
             for truck in tow_trucks {
                 // トラックの位置 (truck.node_id) までの最短距離を取得
-                let distance = distances_from_order.get(&truck.node_id).cloned().unwrap_or(10000001);
+                let distance = distances_from_order
+                    .get(&truck.node_id)
+                    .cloned()
+                    .unwrap_or(10000001);
 
                 // 現在の距離が min_distance より小さい場合、または同じ距離でトラックのIDが小さい場合に更新
-                if distance < min_distance || (distance == min_distance && truck.node_id < min_truck_id) {
+                if distance < min_distance
+                    || (distance == min_distance && truck.node_id < min_truck_id)
+                {
                     min_distance = distance;
                     min_truck_id = truck.node_id; // IDも更新
                     nearest_truck = Some(truck);
@@ -170,8 +173,8 @@ impl<
 //     graph.shortest_path(node_id_1, node_id_2)
 // }
 
-use std::collections::{BinaryHeap, HashMap};
 use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap};
 
 #[derive(Debug, Eq, PartialEq)]
 struct State {
@@ -200,7 +203,10 @@ impl Graph {
 
         // スタート地点の初期化
         distances.insert(start_node_id, 0);
-        heap.push(State { node_id: start_node_id, cost: 0 });
+        heap.push(State {
+            node_id: start_node_id,
+            cost: 0,
+        });
 
         // ダイクストラ法のメインループ
         while let Some(State { node_id, cost }) = heap.pop() {
@@ -219,7 +225,8 @@ impl Graph {
                         cost: cost + edge.weight,
                     };
 
-                    let current_distance = distances.get(&next.node_id).cloned().unwrap_or(i32::MAX);
+                    let current_distance =
+                        distances.get(&next.node_id).cloned().unwrap_or(i32::MAX);
 
                     // より短い経路が見つかったら更新
                     if next.cost < current_distance {
@@ -238,5 +245,8 @@ impl Graph {
 fn calculate_distance(graph: &Graph, node_id_1: i32, node_id_2: i32) -> i32 {
     let distances_from_node_1 = graph.dijkstra(node_id_1);
     // node_id_2 までの距離を取得し、なければ i32::MAX を返す
-    distances_from_node_1.get(&node_id_2).cloned().unwrap_or(i32::MAX)
+    distances_from_node_1
+        .get(&node_id_2)
+        .cloned()
+        .unwrap_or(i32::MAX)
 }
