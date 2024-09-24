@@ -137,11 +137,7 @@ impl<
             None => (None, None),
         };
 
-        let area_id = self
-            .map_repository
-            .get_area_id_by_node_id(order.node_id)
-            .await
-            .unwrap();
+        let area_id = order.area_id;
 
         Ok(OrderDto {
             id: order.id,
@@ -235,11 +231,7 @@ impl<
                 None => (None, None),
             };
 
-            let order_area_id = self
-                .map_repository
-                .get_area_id_by_node_id(order.node_id)
-                .await
-                .unwrap();
+            let order_area_id = order.area_id;
 
             results.push(OrderDto {
                 id: order.id,

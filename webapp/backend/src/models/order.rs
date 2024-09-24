@@ -12,4 +12,5 @@ pub struct Order {
     pub car_value: f64,
     pub order_time: DateTime<Utc>,
     pub completed_time: Option<DateTime<Utc>>,
+    pub area_id: i32,
 }
