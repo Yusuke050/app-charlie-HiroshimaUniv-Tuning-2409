@@ -13,7 +13,6 @@ impl TowTruckRepositoryImpl {
         TowTruckRepositoryImpl { pool }
     }
 }
-
 impl TowTruckRepository for TowTruckRepositoryImpl {
     async fn get_paginated_tow_trucks(
         &self,
@@ -46,7 +45,6 @@ impl TowTruckRepository for TowTruckRepositoryImpl {
             -1 => "".to_string(),
             page_size => format!("OFFSET {}", page * page_size),
         };
-
         let query = format!(
             "SELECT
                 tt.id,
@@ -61,9 +59,9 @@ impl TowTruckRepository for TowTruckRepositoryImpl {
                 users u
             ON
                 tt.driver_id = u.id
-            JOIN 
+            JOIN
                 locations l
-            ON 
+            ON
                 tt.id = l.tow_truck_id
             {}
             ORDER BY
@@ -72,14 +70,11 @@ impl TowTruckRepository for TowTruckRepositoryImpl {
             {}",
             where_clause, limit_clause, offset_clause
         );
-
         let tow_trucks = sqlx::query_as::<_, TowTruck>(&query)
             .fetch_all(&self.pool)
             .await?;
-
         Ok(tow_trucks)
     }
-
     async fn update_location(&self, tow_truck_id: i32, node_id: i32) -> Result<(), AppError> {
         sqlx::query("INSERT INTO locations (tow_truck_id, node_id) VALUES (?, ?)")
             .bind(tow_truck_id)
@@ -88,17 +83,14 @@ impl TowTruckRepository for TowTruckRepositoryImpl {
             .await?;
         Ok(())
     }
-
     async fn update_status(&self, tow_truck_id: i32, status: &str) -> Result<(), AppError> {
         sqlx::query("UPDATE tow_trucks SET status = ? WHERE id = ?")
             .bind(status)
             .bind(tow_truck_id)
             .execute(&self.pool)
             .await?;
-
         Ok(())
     }
-
     async fn find_tow_truck_by_id(&self, id: i32) -> Result<Option<TowTruck>, AppError> {
         let tow_truck = sqlx::query_as::<_, TowTruck>(
             "SELECT
@@ -106,7 +98,7 @@ impl TowTruckRepository for TowTruckRepositoryImpl {
             FROM
                 tow_trucks tt
             JOIN
-                users u 
+                users u
             ON
                 tt.driver_id = u.id
             JOIN
@@ -121,7 +113,36 @@ impl TowTruckRepository for TowTruckRepositoryImpl {
         .bind(id)
         .fetch_optional(&self.pool)
         .await?;
-
         Ok(tow_truck)
+    }
+    // 新規追加: 複数のトウ・トラックを一度に取得するメソッド
+    async fn find_tow_truck_by_ids(&self, ids: &[i32]) -> Result<Vec<TowTruck>, AppError> {
+        if ids.is_empty() {
+            return Ok(vec![]); // 空のIDリストに対しては空の結果を返す
+        }
+        // プレースホルダの生成
+        let query_placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(",");
+        // クエリ文字列を作成
+        let query = format!(
+            "SELECT
+                tt.id, tt.driver_id, u.username AS driver_username, tt.status, l.node_id, tt.area_id
+            FROM
+                tow_trucks tt
+            JOIN
+                users u ON tt.driver_id = u.id
+            JOIN
+                locations l ON tt.id = l.tow_truck_id
+            WHERE
+                tt.id IN ({})",
+            query_placeholders
+        );
+        // クエリを実行し、IDリストをバインド
+        let mut query_builder = sqlx::query_as::<_, TowTruck>(&query);
+        for id in ids {
+            query_builder = query_builder.bind(id);
+        }
+        // クエリの実行
+        let tow_trucks = query_builder.fetch_all(&self.pool).await?;
+        Ok(tow_trucks)
     }
 }
